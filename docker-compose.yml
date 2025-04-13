@@ -8,8 +8,8 @@ services:
       - "5672:5672"  # AMQP port
       - "15672:15672"  # Management UI
     environment:
-      - RABBITMQ_DEFAULT_USER=user
-      - RABBITMQ_DEFAULT_PASS=password
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_USER:-user}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASSWORD:-password}
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
     healthcheck:
@@ -25,36 +25,39 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - PORT=3000
-      - RABBITMQ_URL=amqp://user:password@rabbitmq_broker:5672
-      - RABBITMQ_QUEUE=tasks_queue
-      - RABBITMQ_EXCHANGE=tasks_exchange
-      - RABBITMQ_ROUTING_KEY=task.created
-      - AWS_REGION=us-east-1
-      - AWS_ACCESS_KEY_ID=dummy_access_key
-      - AWS_SECRET_ACCESS_KEY=dummy_secret_key
-      - SES_FROM_EMAIL=noreply@example.com
+      - PORT=${PORT}
+      - RABBITMQ_URL=${RABBITMQ_URL}
+      - RABBITMQ_QUEUE=${RABBITMQ_QUEUE}
+      - RABBITMQ_EXCHANGE=${RABBITMQ_EXCHANGE}
+      - RABBITMQ_ROUTING_KEY=${RABBITMQ_ROUTING_KEY}
+      - AWS_REGION=${AWS_REGION}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - SES_FROM_EMAIL=${SES_FROM_EMAIL}
     depends_on:
       rabbitmq_broker:
         condition: service_healthy
 
-  go_cli:
+  go-cli:
     build:
       context: ./go-cli
       dockerfile: Dockerfile
     environment:
-      - RABBITMQ_URL=amqp://user:password@rabbitmq_broker:5672
-      - RABBITMQ_EXCHANGE=tasks_exchange
-      - RABBITMQ_ROUTING_KEY=task.created
-      - AWS_REGION=us-east-1
-      - AWS_ACCESS_KEY_ID=dummy_access_key
-      - AWS_SECRET_ACCESS_KEY=dummy_secret_key
-      - AWS_S3_BUCKET=tasks-bucket
-      - DEFAULT_RECIPIENT_EMAIL=user@example.com
+      - RABBITMQ_URL=${RABBITMQ_URL}
+      - RABBITMQ_EXCHANGE=${RABBITMQ_EXCHANGE}
+      - RABBITMQ_ROUTING_KEY=${RABBITMQ_ROUTING_KEY}
+      - AWS_REGION=${AWS_REGION}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_S3_BUCKET=${AWS_S3_BUCKET}
+      - DEFAULT_RECIPIENT_EMAIL=${DEFAULT_RECIPIENT_EMAIL}
+    entrypoint: ["/usr/local/bin/tasks"]
+    volumes:
+      - tasks_data:/app
+    working_dir: /app
     depends_on:
       - rabbitmq_broker
-    profiles:
-      - cli
 
 volumes:
+  tasks_data:
   rabbitmq_data:

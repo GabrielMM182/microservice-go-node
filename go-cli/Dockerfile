@@ -1,5 +1,5 @@
 # Build stage
-FROM golang:1.21-alpine AS builder
+FROM golang:1.24-alpine AS builder
 
 # Install build dependencies
 RUN apk add --no-cache git
@@ -26,7 +26,7 @@ FROM alpine:latest
 RUN apk --no-cache add ca-certificates
 
 # Copy the binary from builder
-COPY --from=builder /app/tasks /app/tasks
+COPY --from=builder /app/tasks /usr/local/bin/tasks
 
-# Set the binary as the entrypoint
-ENTRYPOINT ["/app/tasks"]
+# Set tasks binary as entrypoint
+ENTRYPOINT ["/usr/local/bin/tasks"]
