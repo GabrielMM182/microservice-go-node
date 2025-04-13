@@ -1,6 +1,5 @@
 const { S3Client, GetObjectCommand } = require('@aws-sdk/client-s3');
 const { SESClient, SendEmailCommand } = require('@aws-sdk/client-ses');
-const nodemailer = require('nodemailer');
 const logger = require('../utils/logger');
 
 const s3Client = new S3Client({
@@ -34,23 +33,27 @@ async function downloadFromS3(bucket, key) {
 
 async function sendEmailWithSES(recipientEmail, csvContent) {
   try {
-    const transporter = nodemailer.createTransport({
-      SES: { ses: sesClient, aws: { SendEmailCommand } }
-    });
-
-    await transporter.sendMail({
-      from: process.env.SES_FROM_EMAIL,
-      to: recipientEmail,
-      subject: 'Relatório de Tarefas',
-      text: 'Segue em anexo seu relatório de tarefas.',
-      attachments: [
-        {
-          filename: 'relatorio-tarefas.csv',
-          content: csvContent
+    // Simplificando para teste - apenas enviar um e-mail simples sem anexo
+    const params = {
+      Source: process.env.SES_FROM_EMAIL,
+      Destination: {
+        ToAddresses: [recipientEmail]
+      },
+      Message: {
+        Subject: {
+          Data: 'Relatório de Tarefas'
+        },
+        Body: {
+          Text: {
+            Data: 'Seu relatório de tarefas foi gerado. Por favor, verifique o bucket S3 para acessá-lo.'
+          }
         }
-      ]
-    });
-
+      }
+    };
+    
+    const command = new SendEmailCommand(params);
+    await sesClient.send(command);
+    
     logger.info('Email sent successfully');
   } catch (error) {
     logger.error('Error sending email:', error);

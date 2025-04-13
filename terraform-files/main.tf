@@ -58,7 +58,8 @@ resource "aws_iam_policy" "app_policy" {
       {
         Effect = "Allow"
         Action = [
-          "ses:SendRawEmail"
+          "ses:SendRawEmail",
+          "ses:SendEmail"
         ]
         Resource = [
           aws_ses_email_identity.sender.arn
