@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+  rabbitmq_broker:
+    image: rabbitmq:3-management
+    container_name: rabbitmq_broker
+    ports:
+      - "5672:5672"  # AMQP port
+      - "15672:15672"  # Management UI
+    environment:
+      - RABBITMQ_DEFAULT_USER=user
+      - RABBITMQ_DEFAULT_PASS=password
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  node_api:
+    build:
+      context: ./node-api
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - RABBITMQ_URL=amqp://user:password@rabbitmq_broker:5672
+      - RABBITMQ_QUEUE=tasks_queue
+      - RABBITMQ_EXCHANGE=tasks_exchange
+      - RABBITMQ_ROUTING_KEY=task.created
+      - AWS_REGION=us-east-1
+      - AWS_ACCESS_KEY_ID=dummy_access_key
+      - AWS_SECRET_ACCESS_KEY=dummy_secret_key
+      - SES_FROM_EMAIL=noreply@example.com
+    depends_on:
+      rabbitmq_broker:
+        condition: service_healthy
+
+  go_cli:
+    build:
+      context: ./go-cli
+      dockerfile: Dockerfile
+    environment:
+      - RABBITMQ_URL=amqp://user:password@rabbitmq_broker:5672
+      - RABBITMQ_EXCHANGE=tasks_exchange
+      - RABBITMQ_ROUTING_KEY=task.created
+      - AWS_REGION=us-east-1
+      - AWS_ACCESS_KEY_ID=dummy_access_key
+      - AWS_SECRET_ACCESS_KEY=dummy_secret_key
+      - AWS_S3_BUCKET=tasks-bucket
+      - DEFAULT_RECIPIENT_EMAIL=user@example.com
+    depends_on:
+      - rabbitmq_broker
+    profiles:
+      - cli
+
+volumes:
+  rabbitmq_data:
