@@ -1,0 +1,13 @@
+# AWS Region onde os recursos serão criados
+aws_region = "us-east-1"
+
+# Ambiente (dev, staging, prod)
+environment = "dev"
+
+# Nome do bucket S3 para armazenar os relatórios
+# Deve ser globalmente único e seguir as regras de nomenclatura da AWS
+s3_report_bucket_name = "todo-reports-bucket-unique-name"
+
+# Email que será verificado no SES para envio de emails
+# Você precisará confirmar este email após a criação do recurso
+ses_sender_email = "seu-email@seu-dominio.com"
